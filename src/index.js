@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useRef } from "react";
+import React, { useImperativeHandle, useState, useCallback, useMemo, useRef } from "react";
 import PropTypes from "prop-types";
 import { useMouse } from "react-use";
 import injectSheet from "react-jss";
@@ -89,7 +89,7 @@ const getOffsetAngleOfRangeCenter = (from, to) => {
 
 const modulus360 = angle => (angle + 360) % 360;
 
-const AngleRange = ({
+const AngleRange = React.forwardRef(({
   classes,
   value = { from: 0, to: 90 },
   onChange = ({ from = 0, to = 90 }) => {},
@@ -106,7 +106,7 @@ const AngleRange = ({
   // minOffset = 0,
   // maxOffset = 45,
   isQuarterCircle = false
-}) => {
+}, ref) => {
   const getHandlerXY = useCallback(
     (angle, handlerRadiusOffset) => {
       const alpha = angle % 360;
@@ -145,6 +145,12 @@ const AngleRange = ({
   const toAngleHandlerEl = useRef(null);
 
   const { elX, elY } = useMouse(axisCenterEl);
+
+  useImperativeHandle(ref, () => ({ clear }));
+
+  const clear = () => {
+    console.log("clear")
+  }
 
   const onCenterAngleHandlerMouseDown = useCallback(
     e => {
@@ -454,7 +460,7 @@ const AngleRange = ({
       </div>
     </div>
   );
-};
+});
 
 AngleRange.propTypes = {
   value: PropTypes.shape({
