@@ -1246,7 +1246,8 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
       max = _ref$max === void 0 ? 359 : _ref$max,
       _ref$isQuarterCircle = _ref.isQuarterCircle,
       isQuarterCircle = _ref$isQuarterCircle === void 0 ? false : _ref$isQuarterCircle;
-  var getHandlerXY = React.useCallback(function (angle, handlerRadiusOffset) {
+
+  var getHandlerXY = function getHandlerXY(angle, handlerRadiusOffset) {
     var alpha = angle % 360;
     var x = (radius + handlerRadiusOffset) * Math.sin(degreesToRadians(alpha));
     var y = -(radius + handlerRadiusOffset) * Math.cos(degreesToRadians(alpha));
@@ -1254,11 +1255,19 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
       x: x,
       y: y
     };
-  }, [radius]);
+  };
 
-  var _useState = React.useState(_extends({}, getHandlerXY((value.to - value.from) / 2, handlerRangeRadiusOffset), {
-    angle: (value.to - value.from) / 2
-  })),
+  var updatedCenterAngle = getCenterAngleOfRange(value.from, value.to);
+
+  var _getHandlerXY = getHandlerXY(updatedCenterAngle, handlerRangeRadiusOffset),
+      xCenter = _getHandlerXY.x,
+      yCenter = _getHandlerXY.y;
+
+  var _useState = React.useState({
+    x: xCenter,
+    y: yCenter,
+    angle: updatedCenterAngle
+  }),
       centerHandler = _useState[0],
       setCenterHandler = _useState[1];
 
@@ -1297,12 +1306,50 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
 
   React.useImperativeHandle(ref, function () {
     return {
-      clear: clear
+      set: set
     };
   });
 
-  var clear = function clear() {
-    console.log("clear");
+  var set = function set(_ref3) {
+    var from = _ref3.from,
+        to = _ref3.to;
+    var updatedCenterAngle = getCenterAngleOfRange(from, to);
+
+    var _getHandlerXY2 = getHandlerXY(updatedCenterAngle, handlerRangeRadiusOffset),
+        xCenter = _getHandlerXY2.x,
+        yCenter = _getHandlerXY2.y;
+
+    if (centerHandler.x != xCenter || centerHandler.y != yCenter) {
+      setCenterHandler({
+        x: xCenter,
+        y: yCenter,
+        angle: updatedCenterAngle
+      });
+    }
+
+    var _getHandlerXY3 = getHandlerXY(from, offsetHandlerRadiusOffset),
+        fromX = _getHandlerXY3.x,
+        fromY = _getHandlerXY3.y;
+
+    if (fromAngleHandler.x != fromX || fromAngleHandler.y != fromY) {
+      setFromAngleHandler({
+        x: fromX,
+        y: fromY,
+        angle: from
+      });
+    }
+
+    var _getHandlerXY4 = getHandlerXY(to, offsetHandlerRadiusOffset),
+        toX = _getHandlerXY4.x,
+        toY = _getHandlerXY4.y;
+
+    if (toAngleHandler.x != toX || toAngleHandler.y != toY) {
+      setToAngleHandler({
+        x: toX,
+        y: toY,
+        angle: to
+      });
+    }
   };
 
   var onCenterAngleHandlerMouseDown = React.useCallback(function (e) {
@@ -1358,27 +1405,27 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
     }
 
     if (isCenterHandlerActive) {
-      var updatedCenterAngle = getAbsoluteAngle();
+      var _updatedCenterAngle = getAbsoluteAngle();
 
-      if (updatedCenterAngle < min || updatedCenterAngle > max) {
-        updatedCenterAngle = centerHandler.angle;
+      if (_updatedCenterAngle < min || _updatedCenterAngle > max) {
+        _updatedCenterAngle = centerHandler.angle;
       }
 
-      var _getHandlerXY = getHandlerXY(updatedCenterAngle, handlerRangeRadiusOffset),
-          xCenter = _getHandlerXY.x,
-          yCenter = _getHandlerXY.y;
+      var _getHandlerXY5 = getHandlerXY(_updatedCenterAngle, handlerRangeRadiusOffset),
+          _xCenter = _getHandlerXY5.x,
+          _yCenter = _getHandlerXY5.y;
 
-      var offsetAngle = Math.ceil(updatedCenterAngle - centerHandler.angle);
+      var offsetAngle = Math.ceil(_updatedCenterAngle - centerHandler.angle);
       var updatedFromAngle = modulus360(fromAngleHandler.angle + offsetAngle);
       var updatedToAngle = modulus360(toAngleHandler.angle + offsetAngle);
 
-      var _getHandlerXY2 = getHandlerXY(updatedFromAngle, offsetHandlerRadiusOffset),
-          xFrom = _getHandlerXY2.x,
-          yFrom = _getHandlerXY2.y;
+      var _getHandlerXY6 = getHandlerXY(updatedFromAngle, offsetHandlerRadiusOffset),
+          xFrom = _getHandlerXY6.x,
+          yFrom = _getHandlerXY6.y;
 
-      var _getHandlerXY3 = getHandlerXY(updatedToAngle, offsetHandlerRadiusOffset),
-          xTo = _getHandlerXY3.x,
-          yTo = _getHandlerXY3.y;
+      var _getHandlerXY7 = getHandlerXY(updatedToAngle, offsetHandlerRadiusOffset),
+          xTo = _getHandlerXY7.x,
+          yTo = _getHandlerXY7.y;
 
       if (limitFrom && (limitFrom.min > updatedFromAngle || limitFrom.max < updatedFromAngle) || limitTo && (limitTo.min > updatedToAngle || limitTo.max < updatedToAngle)) {
         return;
@@ -1390,9 +1437,9 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
         angle: updatedFromAngle
       });
       setCenterHandler({
-        x: xCenter,
-        y: yCenter,
-        angle: updatedCenterAngle
+        x: _xCenter,
+        y: _yCenter,
+        angle: _updatedCenterAngle
       });
       setToAngleHandler({
         x: xTo,
@@ -1404,24 +1451,24 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
     if (isFromAngleHandlerActive) {
       var updatedFromAngleHandlerAngle = getAbsoluteAngle();
 
-      var _getHandlerXY4 = getHandlerXY(updatedFromAngleHandlerAngle, offsetHandlerRadiusOffset),
-          _xFrom = _getHandlerXY4.x,
-          _yFrom = _getHandlerXY4.y;
+      var _getHandlerXY8 = getHandlerXY(updatedFromAngleHandlerAngle, offsetHandlerRadiusOffset),
+          _xFrom = _getHandlerXY8.x,
+          _yFrom = _getHandlerXY8.y;
 
-      var _updatedCenterAngle = getCenterAngleOfRange(updatedFromAngleHandlerAngle, toAngleHandler.angle);
+      var _updatedCenterAngle2 = getCenterAngleOfRange(updatedFromAngleHandlerAngle, toAngleHandler.angle);
 
-      var _getHandlerXY5 = getHandlerXY(_updatedCenterAngle, handlerRangeRadiusOffset),
-          _xCenter = _getHandlerXY5.x,
-          _yCenter = _getHandlerXY5.y;
+      var _getHandlerXY9 = getHandlerXY(_updatedCenterAngle2, handlerRangeRadiusOffset),
+          _xCenter2 = _getHandlerXY9.x,
+          _yCenter2 = _getHandlerXY9.y;
 
       if (limitFrom && (limitTo.min > updatedFromAngleHandlerAngle || limitTo.max < updatedFromAngleHandlerAngle)) {
         return;
       }
 
       setCenterHandler({
-        x: _xCenter,
-        y: _yCenter,
-        angle: _updatedCenterAngle
+        x: _xCenter2,
+        y: _yCenter2,
+        angle: _updatedCenterAngle2
       });
       setFromAngleHandler({
         x: _xFrom,
@@ -1433,15 +1480,15 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
     if (isToAngleHandlerActive) {
       var updatedToAngleHandlerAngle = getAbsoluteAngle();
 
-      var _getHandlerXY6 = getHandlerXY(updatedToAngleHandlerAngle, offsetHandlerRadiusOffset),
-          _xTo = _getHandlerXY6.x,
-          _yTo = _getHandlerXY6.y;
+      var _getHandlerXY10 = getHandlerXY(updatedToAngleHandlerAngle, offsetHandlerRadiusOffset),
+          _xTo = _getHandlerXY10.x,
+          _yTo = _getHandlerXY10.y;
 
-      var _updatedCenterAngle2 = getCenterAngleOfRange(fromAngleHandler.angle, updatedToAngleHandlerAngle);
+      var _updatedCenterAngle3 = getCenterAngleOfRange(fromAngleHandler.angle, updatedToAngleHandlerAngle);
 
-      var _getHandlerXY7 = getHandlerXY(_updatedCenterAngle2, handlerRangeRadiusOffset),
-          _xCenter2 = _getHandlerXY7.x,
-          _yCenter2 = _getHandlerXY7.y;
+      var _getHandlerXY11 = getHandlerXY(_updatedCenterAngle3, handlerRangeRadiusOffset),
+          _xCenter3 = _getHandlerXY11.x,
+          _yCenter3 = _getHandlerXY11.y;
 
       if (limitTo && (limitTo.min > updatedToAngleHandlerAngle || limitTo.max < updatedToAngleHandlerAngle)) {
         return;
@@ -1453,9 +1500,9 @@ var AngleRange = React__default.forwardRef(function (_ref, ref) {
         angle: updatedToAngleHandlerAngle
       });
       setCenterHandler({
-        x: _xCenter2,
-        y: _yCenter2,
-        angle: _updatedCenterAngle2
+        x: _xCenter3,
+        y: _yCenter3,
+        angle: _updatedCenterAngle3
       });
     }
 

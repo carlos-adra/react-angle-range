@@ -107,22 +107,24 @@ const AngleRange = React.forwardRef(({
   // maxOffset = 45,
   isQuarterCircle = false
 }, ref) => {
-  const getHandlerXY = useCallback(
-    (angle, handlerRadiusOffset) => {
-      const alpha = angle % 360;
-      const x =
-        (radius + handlerRadiusOffset) * Math.sin(degreesToRadians(alpha));
-      const y =
-        -(radius + handlerRadiusOffset) * Math.cos(degreesToRadians(alpha));
-      return { x, y };
-    },
-    [radius]
-  );
+  const getHandlerXY = (angle, handlerRadiusOffset) => {
+    const alpha = angle % 360;
+    const x =
+      (radius + handlerRadiusOffset) * Math.sin(degreesToRadians(alpha));
+    const y =
+      -(radius + handlerRadiusOffset) * Math.cos(degreesToRadians(alpha));
+    return { x, y };
+  }
 
-  const [centerHandler, setCenterHandler] = useState({
-    ...getHandlerXY((value.to - value.from) / 2, handlerRangeRadiusOffset),
-    angle: (value.to - value.from) / 2
-  });
+  const updatedCenterAngle = getCenterAngleOfRange(
+    value.from,
+    value.to
+  );
+  const { x: xCenter, y: yCenter } = getHandlerXY(
+    updatedCenterAngle,
+    handlerRangeRadiusOffset
+  );
+  const [centerHandler, setCenterHandler] = useState({ x: xCenter, y: yCenter, angle: updatedCenterAngle });
 
   const [fromAngleHandler, setFromAngleHandler] = useState({
     ...getHandlerXY(value.from, offsetHandlerRadiusOffset),
@@ -146,10 +148,33 @@ const AngleRange = React.forwardRef(({
 
   const { elX, elY } = useMouse(axisCenterEl);
 
-  useImperativeHandle(ref, () => ({ clear }));
+  useImperativeHandle(ref, () => ({ set }));
 
-  const clear = () => {
-    console.log("clear")
+  const set = ({from, to}) => {
+    const updatedCenterAngle = getCenterAngleOfRange(
+      from,
+      to
+    );
+    const { x: xCenter, y: yCenter } = getHandlerXY(
+      updatedCenterAngle,
+      handlerRangeRadiusOffset
+    );
+
+    if (centerHandler.x != xCenter || centerHandler.y != yCenter) {
+      setCenterHandler({ x: xCenter, y: yCenter, angle: updatedCenterAngle });
+    }
+
+    const {x: fromX, y: fromY} = getHandlerXY(from, offsetHandlerRadiusOffset)
+
+    if (fromAngleHandler.x != fromX || fromAngleHandler.y != fromY ) {
+      setFromAngleHandler({x: fromX, y: fromY, angle: from});
+    }
+
+    const {x: toX, y: toY} = getHandlerXY(to, offsetHandlerRadiusOffset)
+
+    if (toAngleHandler.x != toX || toAngleHandler.y != toY ) {
+      setToAngleHandler({x: toX, y: toY, angle: to});
+    }
   }
 
   const onCenterAngleHandlerMouseDown = useCallback(
@@ -408,6 +433,8 @@ const AngleRange = React.forwardRef(({
         }}
       >
         <div className={classes.axisCenter} ref={axisCenterEl} />
+        
+
         <div
           ref={centerHandlerEl}
           className={classes.centerAngleHandler}
@@ -422,6 +449,9 @@ const AngleRange = React.forwardRef(({
           }}
           onMouseDown={onCenterAngleHandlerMouseDown}
         />
+
+
+
         <div
           ref={fromAngleHandlerEl}
           className={classes.offsetAngleHandler}
